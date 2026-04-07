@@ -769,13 +769,11 @@ nav {
   width: min(14px, 3.5vw, 2.5vh);
   height: min(14px, 3.5vw, 2.5vh);
   transform: translate(-50%, -50%);
-  transition: left 0.4s ease, top 0.4s ease, opacity 0.3s;
+  transition: opacity 0.5s ease;
 }
 
 .orbit-star-out {
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0);
-  transition: opacity 0.3s, transform 0.3s;
+  opacity: 0.12;
 }
 
 .time-elapsed {

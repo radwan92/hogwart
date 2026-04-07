@@ -14,6 +14,12 @@ const AUTH_EMAIL = 'hogwart@family.local';
 const { createClient } = window.supabase;
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
+// HTML escape helper — use on all DB strings before inserting into innerHTML
+const ESC_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+export function esc(str) {
+  return String(str).replace(/[&<>"']/g, c => ESC_MAP[c]);
+}
+
 // ---- Auth ----
 
 export async function signIn(password) {
@@ -37,11 +43,15 @@ export async function getKids() {
 }
 
 export async function updatePoints(kidId, delta, reason) {
-    const { data: kid } = await sb.from('kids')
+    const { data: kid, error } = await sb.from('kids')
         .select('points').eq('id', kidId).single();
+    if (error || !kid) throw new Error('Could not load kid points');
     const newPoints = Math.max(0, kid.points + delta);
-    await sb.from('kids').update({ points: newPoints }).eq('id', kidId);
-    await sb.from('point_log').insert({ kid_id: kidId, delta, reason });
+    const { error: updateErr } = await sb.from('kids')
+        .update({ points: newPoints }).eq('id', kidId);
+    if (updateErr) throw new Error('Could not update points');
+    // Log is best-effort — don't block on failure
+    sb.from('point_log').insert({ kid_id: kidId, delta, reason });
     return newPoints;
 }
 
@@ -66,12 +76,15 @@ export async function deleteShopItem(id) {
 }
 
 export async function buyItem(kidId, item) {
-    const { data: kid } = await sb.from('kids')
+    const { data: kid, error } = await sb.from('kids')
         .select('points').eq('id', kidId).single();
+    if (error || !kid) throw new Error('Could not load kid points');
     if (kid.points < item.cost) return { error: 'Not enough points' };
     const newPoints = kid.points - item.cost;
-    await sb.from('kids').update({ points: newPoints }).eq('id', kidId);
-    await sb.from('point_log').insert({
+    const { error: updateErr } = await sb.from('kids')
+        .update({ points: newPoints }).eq('id', kidId);
+    if (updateErr) throw new Error('Could not update points');
+    sb.from('point_log').insert({
         kid_id: kidId, delta: -item.cost, reason: `shop:${item.name}`
     });
     return { points: newPoints };
