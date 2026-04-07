@@ -240,10 +240,36 @@ nav {
   background: #f0f0f0;
 }
 
+/* Kid avatars */
+.kid-avatar {
+  width: 36px;
+  height: 36px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.kid-avatar-sm {
+  width: 22px;
+  height: 22px;
+  vertical-align: middle;
+  margin-right: 3px;
+}
+
 .home-kid-name {
   font-size: 1.1rem;
   font-weight: 400;
   margin-bottom: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.kid-btn-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
 }
 
 .home-kid-stars {
@@ -260,8 +286,8 @@ nav {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 2px;
-  max-width: calc(min(22px, 5vw, 3.5vh) * 5 + 2px * 4);
+  align-items: center;
+  gap: 3px;
   margin: 0 auto;
 }
 
@@ -276,6 +302,90 @@ nav {
   flex-shrink: 0;
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Mega and super stars are bigger */
+.star-mega {
+  width: min(34px, 8vw, 5.5vh);
+  height: min(34px, 8vw, 5.5vh);
+}
+
+.star-super {
+  width: min(28px, 6.5vw, 4.5vh);
+  height: min(28px, 6.5vw, 4.5vh);
+}
+
+/* Small stars for shop/buttons */
+.star-sm {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  pointer-events: none;
+}
+
+.star-sm.star-mega {
+  width: 22px;
+  height: 22px;
+}
+
+.star-sm.star-super {
+  width: 19px;
+  height: 19px;
+}
+
+/* Crossfade for star grid updates */
+.home-kid-stars {
+  transition: opacity 0.15s ease;
+}
+.stars-fade {
+  opacity: 0;
+}
+
+/* Star legend */
+.star-legend {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-top: 0.5rem;
+  flex-shrink: 0;
+  opacity: 0.45;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.7rem;
+  color: #999;
+}
+
+.legend-star {
+  width: 12px;
+  height: 12px;
+}
+
+.legend-star-big {
+  width: 18px;
+  height: 18px;
+}
+
+/* Shop item star price */
+.item-cost-stars {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+/* Kid button in shop — show stars */
+.kid-btn-stars {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 4px;
 }
 
 .star-enter {
@@ -437,6 +547,20 @@ nav {
     font-size: min(0.9rem, 4vh);
     border-radius: 8px;
   }
+
+  .star-mega {
+    width: min(22px, 5vw, 4vh);
+    height: min(22px, 5vw, 4vh);
+  }
+
+  .star-super {
+    width: min(18px, 4vw, 3.5vh);
+    height: min(18px, 4vw, 3.5vh);
+  }
+
+  .star-legend {
+    display: none;
+  }
 }
 
 /* ---- Kid selector (shared across views) ---- */
@@ -595,6 +719,47 @@ nav {
   font-weight: 500;
   font-size: 1.1rem;
   margin-bottom: 0.75rem;
+}
+
+.manage-kid {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.manage-kid span {
+  flex: 1;
+  font-weight: 500;
+}
+
+.kid-points-input {
+  width: 80px;
+  padding: 8px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  text-align: center;
+  outline: none;
+}
+
+.kid-points-input:focus {
+  border-color: #333;
+}
+
+.set-points-btn {
+  padding: 8px 16px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 #manage-view h3 {

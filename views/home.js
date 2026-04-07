@@ -1,4 +1,4 @@
-import { getKids, updatePoints } from '../db.js';
+import { getKids, updatePoints, esc, renderStarIcons, STARS, avatarFor } from '../db.js';
 
 let kids = [];
 let selectedKid = null;
@@ -9,60 +9,19 @@ const STAR_IMG = 'star.png';
 
 function renderStarsHTML(count) {
   if (count <= 0) return '<div class="star-grid"><span class="empty-stars">No stars yet</span></div>';
-  const stars = Array(count).fill(`<img class="star" src="${STAR_IMG}" alt="">`).join('');
-  return `<div class="star-grid">${stars}</div>`;
+  return `<div class="star-grid">${renderStarIcons(count)}</div>`;
 }
 
 function animateStars(kidId, oldCount, newCount) {
   const container = document.querySelector(`.home-kid-stars[data-id="${kidId}"]`);
-  let grid = container.querySelector('.star-grid');
 
-  // First render — just set it
-  if (!grid) {
-    container.innerHTML = renderStarsHTML(newCount);
-    return;
-  }
-
-  const emptyMsg = grid.querySelector('.empty-stars');
-  if (emptyMsg) emptyMsg.remove();
-
-  const diff = newCount - oldCount;
-
-  if (diff > 0) {
-    // Add stars one at a time with staggered fade-in
-    for (let i = 0; i < diff; i++) {
-      const img = document.createElement('img');
-      img.className = 'star star-enter';
-      img.src = STAR_IMG;
-      img.alt = '';
-      grid.appendChild(img);
-      // Stagger: trigger fade-in after a delay
-      setTimeout(() => img.classList.remove('star-enter'), 40 + i * 80);
-    }
-  } else if (diff < 0) {
-    // Remove stars one at a time from the end with staggered fade-out
-    const stars = grid.querySelectorAll('.star');
-    const removeCount = Math.min(-diff, stars.length);
-    for (let i = 0; i < removeCount; i++) {
-      const idx = stars.length - 1 - i;
-      const star = stars[idx];
-      setTimeout(() => {
-        star.classList.add('star-exit');
-        star.addEventListener('transitionend', () => star.remove(), { once: true });
-        // Fallback removal
-        setTimeout(() => { if (star.parentNode) star.remove(); }, 350);
-      }, i * 80);
-    }
-  }
-
-  // Handle zero state
-  if (newCount <= 0) {
-    setTimeout(() => {
-      if (grid.querySelectorAll('.star:not(.star-exit)').length === 0) {
-        grid.innerHTML = '<span class="empty-stars">No stars yet</span>';
-      }
-    }, Math.abs(diff) * 80 + 350);
-  }
+  // When star types change (e.g. 9→10 gains a super star), re-render with crossfade
+  const newHTML = renderStarsHTML(newCount);
+  container.classList.add('stars-fade');
+  setTimeout(() => {
+    container.innerHTML = newHTML;
+    container.classList.remove('stars-fade');
+  }, 150);
 }
 
 export function render() {
@@ -80,7 +39,10 @@ export async function init() {
     <div class="home-kids">
       ${kids.map(kid => `
         <button class="home-kid-card" data-id="${kid.id}">
-          <div class="home-kid-name">${kid.name}</div>
+          <div class="home-kid-name">
+            ${avatarFor(kid.name) ? `<img class="kid-avatar" src="${avatarFor(kid.name)}" alt="">` : ''}
+            ${esc(kid.name)}
+          </div>
           <div class="home-kid-stars" data-id="${kid.id}">${renderStarsHTML(kid.points)}</div>
           <div class="home-kid-number" data-id="${kid.id}">${kid.points}</div>
         </button>
@@ -96,6 +58,18 @@ export async function init() {
         ${[1, 2, 5, 10].map(n =>
           `<button class="btn-sub home-delta" data-delta="-${n}">&minus;${n}</button>`
         ).join('')}
+      </div>
+    </div>
+    <div class="star-legend">
+      <div class="legend-row">
+        <img class="legend-star legend-star-big" src="${STARS.super}" alt="">
+        <span>=</span>
+        ${Array(10).fill(`<img class="legend-star" src="${STARS.normal}" alt="">`).join('')}
+      </div>
+      <div class="legend-row">
+        <img class="legend-star legend-star-big" src="${STARS.mega}" alt="">
+        <span>=</span>
+        ${Array(10).fill(`<img class="legend-star" src="${STARS.super}" alt="">`).join('')}
       </div>
     </div>
   `;
@@ -161,14 +135,22 @@ async function award(kidId, delta) {
   setTimeout(() => cardEl.classList.remove(cls), 600);
 
   // DB update — reconcile if server disagrees
-  const newPoints = await updatePoints(kidId, delta, 'manual');
-  if (newPoints !== optimisticPoints) {
-    animateStars(kidId, optimisticPoints, newPoints);
-    kid.points = newPoints;
-    document.querySelector(`.home-kid-number[data-id="${kidId}"]`).textContent = newPoints;
+  try {
+    const newPoints = await updatePoints(kidId, delta, 'manual');
+    if (newPoints !== optimisticPoints) {
+      animateStars(kidId, optimisticPoints, newPoints);
+      kid.points = newPoints;
+      document.querySelector(`.home-kid-number[data-id="${kidId}"]`).textContent = newPoints;
+    }
+  } catch (e) {
+    // Revert optimistic update on failure
+    animateStars(kidId, optimisticPoints, oldPoints);
+    kid.points = oldPoints;
+    const numEl = document.querySelector(`.home-kid-number[data-id="${kidId}"]`);
+    if (numEl) numEl.textContent = oldPoints;
+  } finally {
+    animating = false;
   }
-
-  animating = false;
 }
 
 function flyStars(fromEl, toEl, count) {

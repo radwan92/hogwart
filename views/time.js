@@ -1,4 +1,4 @@
-import { getKids, updatePoints, getSetting } from '../db.js';
+import { getKids, updatePoints, getSetting, esc, avatarFor } from '../db.js';
 
 const CIRCUMFERENCE = 2 * Math.PI * 90;
 const STAR_IMG = 'star.png';
@@ -6,7 +6,6 @@ const STAR_IMG = 'star.png';
 let kids = [];
 let pointsPerMinute = 1;
 let timers = {};        // keyed by kid id
-let displayedStars = {}; // keyed by kid id — current visible star count in orbit
 
 export function render() {
   return '<div id="time-view"><div class="spinner-wrap"><div class="spinner"></div></div></div>';
@@ -19,12 +18,13 @@ export async function init() {
   ]);
   kids = k;
   pointsPerMinute = parseFloat(ratio) || 1;
+  timers = {};
 
   const el = document.getElementById('time-view');
   el.innerHTML = `<div class="time-grid">
     ${kids.map(kid => `
       <div class="time-card" data-kid="${kid.id}">
-        <h2>${kid.name}</h2>
+        <h2>${avatarFor(kid.name) ? `<img class="kid-avatar-sm" src="${avatarFor(kid.name)}" alt="">` : ''}${esc(kid.name)}</h2>
         <div class="gauge-container">
           <svg viewBox="0 0 200 200" class="gauge">
             <circle cx="100" cy="100" r="90" fill="none" stroke="#eee" stroke-width="12"/>
@@ -48,7 +48,6 @@ export async function init() {
   </div>`;
 
   kids.forEach(kid => {
-    displayedStars[kid.id] = kid.points;
     renderOrbitStars(kid.id, kid.points);
     const card = el.querySelector(`.time-card[data-kid="${kid.id}"]`);
     card.querySelector('.start-btn').addEventListener('click', () => startTimer(kid.id));
@@ -58,27 +57,19 @@ export async function init() {
 
 // ---- Orbit stars ----
 
-function renderOrbitStars(kidId, count) {
+const MAX_ORBIT_STARS = 30;
+
+// Renders all stars for the initial total. They stay in fixed positions forever.
+// As points drain, stars fade out from the end (matching the gauge direction).
+function renderOrbitStars(kidId, totalCount) {
   const card = getCard(kidId);
   const container = card.querySelector('.orbit-stars');
-  const existing = container.querySelectorAll('.orbit-star');
-
-  // Remove excess stars (fade out)
-  while (existing.length > count) {
-    const star = existing[existing.length - 1];
-    star.classList.add('orbit-star-out');
-    const s = star; // capture for closure
-    setTimeout(() => s.remove(), 300);
-    // remove from live collection by breaking — we'll rebuild positions below
-    break;
-  }
-
-  // Rebuild: clear and recreate for simplicity (transitions handle smoothness)
   container.innerHTML = '';
-  const radius = 38; // % from center — outside the gauge ring
+  const display = Math.min(totalCount, MAX_ORBIT_STARS);
+  const radius = 38;
 
-  for (let i = 0; i < count; i++) {
-    const angle = (i / count) * Math.PI * 2 - Math.PI / 2; // start from top
+  for (let i = 0; i < display; i++) {
+    const angle = (i / display) * Math.PI * 2 - Math.PI / 2;
     const x = 50 + radius * Math.cos(angle);
     const y = 50 + radius * Math.sin(angle);
 
@@ -91,31 +82,27 @@ function renderOrbitStars(kidId, count) {
   }
 }
 
-function updateOrbitStars(kidId, newCount) {
-  const oldCount = displayedStars[kidId];
-  if (newCount === oldCount) return;
-  displayedStars[kidId] = newCount;
-
+// Fade out stars from the end as points are consumed.
+// Stars stay in position — only opacity changes.
+function updateOrbitStars(kidId, remaining) {
   const card = getCard(kidId);
+  if (!card) return;
   const container = card.querySelector('.orbit-stars');
-  const stars = Array.from(container.querySelectorAll('.orbit-star:not(.orbit-star-out)'));
-  const radius = 38;
+  const stars = container.querySelectorAll('.orbit-star');
+  if (stars.length === 0) return;
 
-  if (newCount < stars.length) {
-    // Fade out excess stars from the end
-    for (let i = newCount; i < stars.length; i++) {
+  // Map remaining points to how many stars should be visible
+  const state = timers[kidId];
+  const total = state ? state.startPoints : remaining;
+  const visibleCount = Math.round((remaining / total) * stars.length);
+
+  for (let i = 0; i < stars.length; i++) {
+    // Stars visible from index 0 up to visibleCount-1; rest faded
+    if (i < visibleCount) {
+      stars[i].classList.remove('orbit-star-out');
+    } else {
       stars[i].classList.add('orbit-star-out');
-      const s = stars[i];
-      setTimeout(() => s.remove(), 300);
     }
-    // Reposition remaining stars to spread evenly (CSS transition handles the animation)
-    for (let i = 0; i < newCount; i++) {
-      const angle = (i / newCount) * Math.PI * 2 - Math.PI / 2;
-      stars[i].style.left = (50 + radius * Math.cos(angle)) + '%';
-      stars[i].style.top = (50 + radius * Math.sin(angle)) + '%';
-    }
-  } else if (newCount > stars.length) {
-    renderOrbitStars(kidId, newCount);
   }
 }
 
@@ -148,6 +135,7 @@ async function tick(kidId) {
 
   const kid = kids.find(k => k.id === kidId);
   const card = getCard(kidId);
+  if (!card) return; // DOM was replaced (navigated away)
   const elapsedMin = (Date.now() - state.startTime) / 1000 / 60;
   const pointsConsumed = Math.floor(elapsedMin * pointsPerMinute);
   const remaining = Math.max(0, state.startPoints - pointsConsumed);
@@ -168,6 +156,7 @@ async function tick(kidId) {
     const diff = pointsConsumed - state.lastDeducted;
     state.lastDeducted = pointsConsumed;
     await updatePoints(kid.id, -diff, `time:${min}:${sec}`);
+    if (!timers[kidId]) return; // view was destroyed while awaiting
     kid.points = remaining;
   }
 

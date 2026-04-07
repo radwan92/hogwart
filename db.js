@@ -20,6 +20,47 @@ export function esc(str) {
   return String(str).replace(/[&<>"']/g, c => ESC_MAP[c]);
 }
 
+// ---- Kid avatars ----
+
+const AVATARS = {
+  'Lea': 'princess.png',
+  'Stefan': 'ironman.png',
+};
+
+export function avatarFor(name) {
+  return AVATARS[name] || null;
+}
+
+// ---- Star rendering (mega=100, super=10, normal=1) ----
+
+export const STARS = {
+  mega:  'mega_star.png',
+  super: 'super_star.png',
+  normal: 'star.png',
+};
+
+// Break a point count into mega/super/normal stars
+export function starBreakdown(points) {
+  const mega = Math.floor(points / 100);
+  const sup  = Math.floor((points % 100) / 10);
+  const norm = points % 10;
+  return { mega, super: sup, normal: norm };
+}
+
+// Render stars as HTML (inline, no grid — just icons in order)
+export function renderStarIcons(points, cssClass = 'star') {
+  if (points <= 0) return '';
+  const b = starBreakdown(points);
+  let html = '';
+  for (let i = 0; i < b.mega; i++)
+    html += `<img class="${cssClass} star-mega" src="${STARS.mega}" alt="">`;
+  for (let i = 0; i < b.super; i++)
+    html += `<img class="${cssClass} star-super" src="${STARS.super}" alt="">`;
+  for (let i = 0; i < b.normal; i++)
+    html += `<img class="${cssClass}" src="${STARS.normal}" alt="">`;
+  return html;
+}
+
 // ---- Auth ----
 
 export async function signIn(password) {

@@ -1,20 +1,35 @@
-import { getShopItems, addShopItem, deleteShopItem, getSetting, setSetting } from '../db.js';
+import { getShopItems, addShopItem, deleteShopItem, getSetting, setSetting, esc, sb, getKids } from '../db.js';
 
 let items = [];
+let kids = [];
 
 export function render() {
   return '<div id="manage-view"><div class="spinner-wrap"><div class="spinner"></div></div></div>';
 }
 
 export async function init() {
-  const [shopItems, timeRatio] = await Promise.all([
+  const [shopItems, timeRatio, k] = await Promise.all([
     getShopItems(),
-    getSetting('time_ratio')
+    getSetting('time_ratio'),
+    getKids()
   ]);
   items = shopItems;
+  kids = k;
 
   const el = document.getElementById('manage-view');
   el.innerHTML = `
+    <section>
+      <h2>Set Stars</h2>
+      <div id="manage-kids">
+        ${kids.map(kid => `
+          <div class="manage-kid">
+            <span>${esc(kid.name)}</span>
+            <input type="number" class="kid-points-input" data-id="${kid.id}" value="${kid.points}" min="0">
+            <button class="set-points-btn" data-id="${kid.id}">Set</button>
+          </div>
+        `).join('')}
+      </div>
+    </section>
     <section>
       <h2>Shop Items</h2>
       <div id="manage-items"></div>
@@ -37,6 +52,19 @@ export async function init() {
   `;
 
   renderItems();
+
+  // Set stars directly
+  el.querySelectorAll('.set-points-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const kidId = btn.dataset.id;
+      const input = el.querySelector(`.kid-points-input[data-id="${kidId}"]`);
+      const newPoints = Math.max(0, parseInt(input.value) || 0);
+      const { error } = await sb.from('kids').update({ points: newPoints }).eq('id', kidId);
+      if (error) { alert('Failed to update'); return; }
+      btn.textContent = 'Saved!';
+      setTimeout(() => btn.textContent = 'Set', 1500);
+    });
+  });
 
   document.getElementById('add-item-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -63,7 +91,7 @@ function renderItems() {
   }
   container.innerHTML = items.map(item => `
     <div class="manage-item">
-      <span>${item.name} &mdash; ${item.cost} pts</span>
+      <span>${esc(item.name)} &mdash; ${item.cost} pts</span>
       <button class="delete-btn" data-id="${item.id}">Delete</button>
     </div>
   `).join('');
