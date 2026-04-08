@@ -23,8 +23,8 @@ export function esc(str) {
 // ---- Kid avatars ----
 
 const AVATARS = {
-  'Lea': 'princess.png',
-  'Stefan': 'ironman.png',
+  'Lea': 'girl.png',
+  'Stefan': 'boy.png',
 };
 
 export function avatarFor(name) {
