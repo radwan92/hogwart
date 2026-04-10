@@ -1,7 +1,7 @@
 import { getKids, updatePoints, getSetting, esc, avatarFor } from '../db.js';
 
 const CIRCUMFERENCE = 2 * Math.PI * 90;
-const STAR_IMG = 'star.png';
+const STAR_IMG = 'assets/star.png';
 
 let kids = [];
 let pointsPerMinute = 1;

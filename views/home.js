@@ -5,7 +5,7 @@ let selectedKid = null;
 let selectedDelta = null;
 let animating = false;
 
-const STAR_IMG = 'star.png';
+const STAR_IMG = 'assets/star.png';
 
 function renderStarsHTML(count) {
   if (count <= 0) return '<div class="star-grid"><span class="empty-stars">No stars yet</span></div>';
@@ -116,6 +116,7 @@ async function award(kidId, delta) {
   if (delta > 0) {
     flyStars(btnEl, cardEl, absDelta);
     confetti(absDelta);
+    playPointSounds(absDelta);
   } else {
     fallingStars(cardEl, absDelta);
   }
@@ -198,8 +199,8 @@ function flyStars(fromEl, toEl, count) {
           opacity: 0.9
         }
       ], {
-        duration: 420 + Math.random() * 160,
-        delay: i * 50,
+        duration: 800 + Math.random() * 300,
+        delay: i * 70,
         easing: 'cubic-bezier(0.2, 0, 0.2, 1)',
         fill: 'forwards'
       });
@@ -399,5 +400,69 @@ function fallingStars(cardEl, count) {
     });
 
     anim.onfinish = () => star.remove();
+  }
+}
+
+// ---- Point collection sound with rising pitch ----
+
+let audioCtx = null;
+let soundBuffer = null;
+let fanfareLowBuffer = null;
+let fanfareHighBuffer = null;
+
+async function loadSound(url) {
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  return audioCtx.decodeAudioData(arrayBuffer);
+}
+
+async function loadSounds() {
+  if (soundBuffer) return;
+  try {
+    audioCtx = new AudioContext();
+    [soundBuffer, fanfareLowBuffer, fanfareHighBuffer] = await Promise.all([
+      loadSound('assets/point_sound.wav'),
+      loadSound('assets/fanfare_low.wav'),
+      loadSound('assets/fanfare_high.flac'),
+    ]);
+  } catch (e) { /* audio not available */ }
+}
+
+// Preload on first init
+loadSounds();
+
+function playBuffer(buffer, delay = 0, volume = 0.5) {
+  if (!buffer || !audioCtx) return;
+  const source = audioCtx.createBufferSource();
+  source.buffer = buffer;
+  const gain = audioCtx.createGain();
+  gain.gain.value = volume;
+  source.connect(gain);
+  gain.connect(audioCtx.destination);
+  source.start(audioCtx.currentTime + delay);
+}
+
+function playPointSounds(count) {
+  if (!soundBuffer || !audioCtx) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  // Rising pitch coin sounds
+  for (let i = 0; i < count; i++) {
+    const source = audioCtx.createBufferSource();
+    source.buffer = soundBuffer;
+    source.playbackRate.value = 1.0 + i * 0.08;
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.4;
+    source.connect(gain);
+    gain.connect(audioCtx.destination);
+    source.start(audioCtx.currentTime + i * 0.1);
+  }
+
+  // Fanfare after all coin sounds finish
+  const coinsDuration = count * 0.1 + (soundBuffer.duration / (1.0 + (count - 1) * 0.08));
+  if (count >= 10) {
+    playBuffer(fanfareHighBuffer, coinsDuration, 0.5);
+  } else if (count >= 5) {
+    playBuffer(fanfareLowBuffer, coinsDuration, 0.5);
   }
 }

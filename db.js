@@ -23,8 +23,8 @@ export function esc(str) {
 // ---- Kid avatars ----
 
 const AVATARS = {
-  'Lea': 'girl.png',
-  'Stefan': 'boy.png',
+  'Lea': 'assets/girl.png',
+  'Stefan': 'assets/boy.png',
 };
 
 export function avatarFor(name) {
@@ -34,9 +34,9 @@ export function avatarFor(name) {
 // ---- Star rendering (mega=100, super=10, normal=1) ----
 
 export const STARS = {
-  mega:  'mega_star.png',
-  super: 'super_star.png',
-  normal: 'star.png',
+  mega:  'assets/mega_star.png',
+  super: 'assets/super_star.png',
+  normal: 'assets/star.png',
 };
 
 // Break a point count into mega/super/normal stars
