@@ -154,7 +154,7 @@ async function award(kidId, delta) {
   }
 }
 
-function flyStars(fromEl, toEl, count) {
+export function flyStars(fromEl, toEl, count) {
   return new Promise(resolve => {
     const fromRect = fromEl.getBoundingClientRect();
     const toRect = toEl.getBoundingClientRect();
@@ -236,7 +236,7 @@ function updateHighlights() {
 
 const CONFETTI_COLORS = ['#f44336','#e91e63','#9c27b0','#3f51b5','#2196f3','#00bcd4','#4CAF50','#ffeb3b','#ff9800','#ff5722'];
 
-function confetti(points) {
+export function confetti(points) {
   const count = Math.min(points * 12, 120);
   const vw = window.innerWidth;
   const vh = window.innerHeight;
@@ -442,7 +442,7 @@ function playBuffer(buffer, delay = 0, volume = 0.5) {
   source.start(audioCtx.currentTime + delay);
 }
 
-function playPointSounds(count) {
+export function playPointSounds(count) {
   if (!soundBuffer || !audioCtx) return;
   if (audioCtx.state === 'suspended') audioCtx.resume();
 

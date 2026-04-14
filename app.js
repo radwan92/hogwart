@@ -3,8 +3,9 @@ import * as home    from './views/home.js';
 import * as shop    from './views/shop.js';
 import * as time    from './views/time.js';
 import * as manage  from './views/manage.js';
+import * as reward  from './views/reward.js';
 
-const views = { home, shop, time, manage };
+const views = { home, shop, time, reward, manage };
 let currentView = null;
 
 const $  = (sel) => document.querySelector(sel);

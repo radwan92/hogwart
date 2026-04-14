@@ -1024,6 +1024,262 @@ nav {
   }
 }
 
+/* ---- Reward ---- */
+
+.reward-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 360px;
+  margin: 0 auto;
+  padding-top: 1rem;
+}
+
+.reward-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.reward-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.reward-time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reward-time-inputs input {
+  width: 70px;
+  padding: 10px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  text-align: center;
+  outline: none;
+}
+
+.reward-time-inputs input:focus {
+  border-color: #333;
+}
+
+.reward-time-inputs span {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.reward-stars-input {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.reward-adj {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  background: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+}
+
+.reward-adj:hover {
+  border-color: #999;
+}
+
+.reward-amount {
+  font-size: 1.5rem;
+  font-weight: 600;
+  min-width: 2ch;
+  text-align: center;
+}
+
+.reward-star-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.reward-kids {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.reward-kid-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.reward-kid-check input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #333;
+}
+
+.reward-start-btn {
+  padding: 14px;
+  background: #4CAF50;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.reward-start-btn:hover {
+  background: #43a047;
+}
+
+/* Reward running */
+.reward-running {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: calc(100vh - 200px);
+  height: calc(100dvh - 200px);
+}
+
+.reward-gauge {
+  width: min(50vw, 28vh);
+  height: min(50vw, 28vh);
+  flex-shrink: 1;
+  min-height: 0;
+}
+
+.reward-countdown {
+  font-size: min(2rem, 6vh) !important;
+}
+
+.reward-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-height: 0;
+  padding-top: 0.3rem;
+}
+
+.reward-prize {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1rem;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.reward-star-sm {
+  width: 20px;
+  height: 20px;
+}
+
+.reward-controls {
+  flex-shrink: 0;
+}
+
+.reward-pause-btn {
+  padding: 8px 24px;
+  font-size: 0.9rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  color: #333;
+}
+
+.reward-pause-btn:hover {
+  border-color: #999;
+}
+
+.reward-awards {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-bottom: 0.5rem;
+}
+
+.reward-award-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 3px solid #4CAF50;
+  border-radius: 12px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reward-award-btn:hover:not(:disabled) {
+  background: #c8e6c9;
+  transform: scale(1.02);
+}
+
+.reward-award-btn .kid-avatar {
+  width: 32px;
+  height: 32px;
+}
+
+.reward-award-btn.awarded {
+  border-color: #4CAF50;
+  background: #4CAF50;
+  color: #fff;
+}
+
+.reward-award-btn.failed {
+  border-color: #ddd;
+  background: #f5f5f5;
+  color: #ccc;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .reward-running {
+    flex-direction: row;
+    height: calc(100vh - 80px);
+    height: calc(100dvh - 80px);
+    gap: 1.5rem;
+  }
+
+  .reward-gauge {
+    width: min(30vw, 45vh);
+    height: min(30vw, 45vh);
+  }
+
+  .reward-info {
+    justify-content: center;
+  }
+
+  .reward-awards {
+    margin-top: 0.5rem;
+    flex-direction: column;
+  }
+
+  .reward-award-btn {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+}
+
 /* ============================================================
    Desktop (>= 600px)
    ============================================================ */
@@ -1128,5 +1384,14 @@ nav {
   .start-btn, .stop-btn {
     padding: 10px 28px;
     font-size: 1rem;
+  }
+
+  .reward-gauge {
+    width: 220px;
+    height: 220px;
+  }
+
+  .reward-countdown {
+    font-size: 2.5rem !important;
   }
 }
