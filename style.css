@@ -931,8 +931,8 @@ nav {
 
 .orbit-star {
   position: absolute;
-  width: min(14px, 3.5vw, 2.5vh);
-  height: min(14px, 3.5vw, 2.5vh);
+  width: min(28px, 7vw, 5vh);
+  height: min(28px, 7vw, 5vh);
   transform: translate(-50%, -50%);
   transition: opacity 0.5s ease;
 }
@@ -1009,8 +1009,8 @@ nav {
   }
 
   .orbit-star {
-    width: min(10px, 2.5vw, 2vh);
-    height: min(10px, 2.5vw, 2vh);
+    width: min(20px, 5vw, 4vh);
+    height: min(20px, 5vw, 4vh);
   }
 
   .time-elapsed {
@@ -1152,6 +1152,7 @@ nav {
   align-items: center;
   height: calc(100vh - 200px);
   height: calc(100dvh - 200px);
+  overflow: hidden;
 }
 
 .reward-gauge {
@@ -1178,15 +1179,27 @@ nav {
 .reward-prize {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 1rem;
-  color: #666;
-  flex-shrink: 0;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.reward-star-sm {
-  width: 20px;
-  height: 20px;
+.reward-prize-star {
+  width: min(28px, 6vw, 4.5vh);
+  height: min(28px, 6vw, 4.5vh);
+}
+
+.reward-prize-star.star-super {
+  width: min(36px, 8vw, 6vh);
+  height: min(36px, 8vw, 6vh);
+}
+
+.reward-prize-star.star-mega {
+  width: min(44px, 10vw, 7vh);
+  height: min(44px, 10vw, 7vh);
 }
 
 .reward-controls {

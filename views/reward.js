@@ -1,4 +1,4 @@
-import { getKids, updatePoints, esc, avatarFor } from '../db.js';
+import { getKids, updatePoints, esc, avatarFor, renderStarIcons } from '../db.js';
 import { flyStars, confetti, playPointSounds } from './home.js';
 
 const CIRCUMFERENCE = 2 * Math.PI * 90;
@@ -16,6 +16,7 @@ let elapsedMs = 0;
 let lastTick = 0;
 let interval = null;
 let awarded = new Set();
+let autoReward = false;
 let failureAudio = null;
 
 export function render() {
@@ -69,10 +70,19 @@ function renderSetup() {
           `).join('')}
         </div>
       </div>
+      <div class="reward-field">
+        <label class="reward-kid-check">
+          <input type="checkbox" id="reward-auto" ${autoReward ? 'checked' : ''}>
+          Auto-award when time ends
+        </label>
+      </div>
       <button class="reward-start-btn" id="reward-start">Start</button>
     </div>
   `;
 
+  el.querySelector('#reward-auto').addEventListener('change', (e) => {
+    autoReward = e.target.checked;
+  });
   el.querySelector('#reward-start').addEventListener('click', startChallenge);
   el.querySelector('#reward-minus').addEventListener('click', () => {
     rewardStars = Math.max(1, rewardStars - 1);
@@ -82,7 +92,7 @@ function renderSetup() {
     rewardStars = Math.min(99, rewardStars + 1);
     el.querySelector('#reward-amount').textContent = rewardStars;
   });
-  el.querySelectorAll('.reward-kid-check input').forEach(cb => {
+  el.querySelectorAll('.reward-kid-check input[data-kid]').forEach(cb => {
     cb.addEventListener('change', () => {
       if (cb.checked) selectedKids.add(cb.dataset.kid);
       else selectedKids.delete(cb.dataset.kid);
@@ -121,14 +131,13 @@ function renderRunning() {
         <div class="gauge-text">
           <div class="gauge-points reward-countdown">${formatTime(totalMs)}</div>
         </div>
-        <div class="orbit-stars" id="reward-orbit"></div>
       </div>
       <div class="reward-info">
-        <div class="reward-prize">
-          ${rewardStars} <img class="reward-star-sm" src="${STAR_IMG}" alt=""> at stake
-        </div>
         <div class="reward-controls">
           <button id="reward-pause" class="reward-pause-btn">Pause</button>
+        </div>
+        <div class="reward-prize">
+          ${renderStarIcons(rewardStars, 'reward-prize-star')}
         </div>
         <div class="reward-awards">
           ${[...selectedKids].map(kidId => {
@@ -145,46 +154,10 @@ function renderRunning() {
     </div>
   `;
 
-  renderOrbitStars();
-
   el.querySelector('#reward-pause').addEventListener('click', togglePause);
   el.querySelectorAll('.reward-award-btn').forEach(btn => {
     btn.addEventListener('click', () => awardKid(btn.dataset.kid));
   });
-}
-
-// ---- Orbit stars ----
-
-function renderOrbitStars() {
-  const container = document.getElementById('reward-orbit');
-  if (!container) return;
-  container.innerHTML = '';
-  const count = Math.min(rewardStars, 30);
-  const radius = 38;
-
-  for (let i = 0; i < count; i++) {
-    const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
-    const x = 50 + radius * Math.cos(angle);
-    const y = 50 + radius * Math.sin(angle);
-    const img = document.createElement('img');
-    img.src = STAR_IMG;
-    img.className = 'orbit-star';
-    img.style.left = x + '%';
-    img.style.top = y + '%';
-    container.appendChild(img);
-  }
-}
-
-function updateOrbitStars(fraction) {
-  const container = document.getElementById('reward-orbit');
-  if (!container) return;
-  const stars = container.querySelectorAll('.orbit-star');
-  if (stars.length === 0) return;
-  const visibleCount = Math.round(fraction * stars.length);
-  for (let i = 0; i < stars.length; i++) {
-    if (i < visibleCount) stars[i].classList.remove('orbit-star-out');
-    else stars[i].classList.add('orbit-star-out');
-  }
 }
 
 // ---- Timer logic ----
@@ -207,8 +180,6 @@ function tick() {
 
   const countdown = document.querySelector('.reward-countdown');
   if (countdown) countdown.textContent = formatTime(remaining);
-
-  updateOrbitStars(fraction);
 
   if (remaining <= 0) {
     phase = 'done';
@@ -238,7 +209,7 @@ function togglePause() {
 
 async function awardKid(kidId) {
   if (awarded.has(kidId)) return;
-  if (phase !== 'running' && phase !== 'paused') return;
+  if (phase !== 'running' && phase !== 'paused' && !(phase === 'done' && autoReward)) return;
 
   awarded.add(kidId);
 
@@ -274,6 +245,15 @@ async function awardKid(kidId) {
 // ---- End states ----
 
 function onTimeUp() {
+  if (autoReward) {
+    // Auto-award all unawarded kids
+    const unawarded = [...selectedKids].filter(id => !awarded.has(id));
+    unawarded.forEach((kidId, i) => {
+      setTimeout(() => awardKid(kidId), i * 300);
+    });
+    return;
+  }
+
   try {
     if (failureAudio) {
       failureAudio.currentTime = 0;
